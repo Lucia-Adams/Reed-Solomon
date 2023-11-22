@@ -10,7 +10,7 @@ class GF_Polynomial():
         self.strc = strc
 
     def __str__(self):
-        return f"Polynomial {self.strc}"
+        return f"GF_Polynomial {self.strc}"
     
     def binary(self):
         # converts string in base 2 to integer base 10, then convert back to python binary
@@ -37,7 +37,7 @@ class Galois_Field():
         self.size_m = gf_size_m
         self.size = 2**gf_size_m
         self.irpol = irpol
-        self.mult_table = self.generate_gf_elem_table()
+        self.elem_table = self.generate_gf_elem_table()
         self.inverse_table = self.generate_gf_elem_inverse_table()
 
         assert irpol.degree() == m
@@ -77,7 +77,7 @@ class Galois_Field():
         """
 
         gf_size = self.size
-        units = self.mult_table[1:] 
+        units = self.elem_table[1:] 
         #  The element 0 has no inverse so define as 0 here
         inverse_table = [0]
 
@@ -87,6 +87,13 @@ class Galois_Field():
             inverse_table.append(units[inverse_index])
         
         return inverse_table
+    
+    def add(self, a ,b):
+        """
+        Addition and subtarction and XOR are equivalent in the Galois Field 
+        a,b (Int) - Galois Field elements to add
+        """
+        return a^b
 
     
     def mult(self, a,b):
@@ -95,7 +102,7 @@ class Galois_Field():
         a,b (Int) - Galois Field elements to be multiplied together to return another GF element
         """
         # get mutliplicative elemnts ie remove 0 from begining so 1 is alpha^0 at index 0
-        units = self.mult_table[1:] 
+        units = self.elem_table[1:] 
 
         if a==0 or b==0:
             return 0
@@ -118,7 +125,7 @@ class Galois_Field():
             # Can't do this divide by 0!!
             return -1 
         
-        units = self.mult_table[1:] 
+        units = self.elem_table[1:] 
         
         b_index = units.index(b)
         # b = alpha^m inverse element is stored at index m+1 
@@ -127,18 +134,57 @@ class Galois_Field():
         return self.mult(a, b_inverse)
     
 
+# class e_Polynomial():
+#     # This is a polynomial where all the coefficients are elements of the Galois Field
 
-
-def gen_poly(field_elem, gen_degree):
-    """
-    field_elem (Int[]) -  List of generated field elements
-    gen_degree (Int) - degree of the generator polynomial ie n-k
-    """
+#     def __init__(self, GF, coef):
+#         """
+#         GF (Galois_Field) -  Galois Field we are working in
+#         coeff (Int[]) - list of the coefficients which are all GF elements
+#         """
+#         self.coef = coef
     
-    gen_roots = field_elem[1:gen_degree+1]
+#     def __str__(self):
+#         return f"e_Polynomial {self.coef}"
+    
+#     def mult(a, b):
+#         """
+#         This multiplies two polynomials togther ensuring resulting coefficinets are in the GF
+#         a,b (Int) - e_Polynomials to be multiplied together to return another GF element
+#         """
+
+#         result = a
+
+
+
+def gen_poly(GF, gen_degree):
+    """
+    GF (Galois_Field) -  Galois Field we are working in
+    gen_degree (Int) - degree of the generator polynomial ie n-k
+    
+    result (Int[]) - list of generator polynomial with coefficnets as GF elements
+    """
+    gen_roots = GF.elem_table[1:gen_degree+1]
+    print(gen_roots)
+
     # g(x) = (x-alpa^0)(x-alpha^2)...(x-alpha^n-k-1)
+    # ie g(x) = (x+alpa^0)(x+alpha^2)...(x+alpha^n-k-1) as addition is subtratcion in GF
+    # need to expand this but using the field multiplication
 
+    # Take first root to get (x-alpha^0)
+    result = [1, gen_roots.pop(0)]
 
+    for r in gen_roots:
+        mult_by_root = [GF.mult(i, r) for i in result] # multiplies result what we had by root
+        result.append(0) # what we had multiplies eveything by x
+
+        # go through from low to highest degree and add mult-by root to result 
+        for i in range(1,len(mult_by_root)+1):
+            result[-i] = GF.add(result[-i], mult_by_root[-i])
+
+    return result
+
+    
 
 
 # global definitions for RS(15, 11) with GF(16) and m is 4 bits
@@ -152,12 +198,12 @@ m = int(math.log(n+1,2))
 irpol = GF_Polynomial('10011')
 
 GF = Galois_Field(m, irpol)
-print(GF.mult_table)
+print(GF.elem_table)
 print(GF.inverse_table)
 
 print(GF.mult(10,13))
 
 # maybe test another value for this
 print(GF.div(11, 10))
-
+gen_poly(GF, (n-k))
 
