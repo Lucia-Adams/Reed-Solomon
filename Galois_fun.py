@@ -40,7 +40,7 @@ class Galois_Field():
         self.elem_table = self.generate_gf_elem_table()
         self.inverse_table = self.generate_gf_elem_inverse_table()
 
-        assert irpol.degree() == m
+        assert irpol.degree() == gf_size_m
 
 
     def generate_gf_elem_table(self):
@@ -50,9 +50,9 @@ class Galois_Field():
         # have first two elements of table standard, so need GF-2 more elements 
         table = [0, 1] 
         # This is the highest degree term of the irreducible polynomial is Polynomial('1' + ('0' * irpol.degree())) ie integer is 2^degree = size galois field
-        high_deg = 2**(irpol.degree())
+        high_deg = 2**(self.irpol.degree())
         # Holds integer version of rest of the irreducible polynomial ie eveything but it's highest degree
-        rest = irpol.denary() - high_deg
+        rest = self.irpol.denary() - high_deg
 
         for i in range(high_deg-2):
             last_alpha = table[-1]
@@ -165,7 +165,6 @@ def gen_poly(GF, gen_degree):
     result (Int[]) - list of generator polynomial with coefficnets as GF elements
     """
     gen_roots = GF.elem_table[1:gen_degree+1]
-    print(gen_roots)
 
     # g(x) = (x-alpa^0)(x-alpha^2)...(x-alpha^n-k-1)
     # ie g(x) = (x+alpa^0)(x+alpha^2)...(x+alpha^n-k-1) as addition is subtratcion in GF
@@ -184,7 +183,26 @@ def gen_poly(GF, gen_degree):
 
     return result
 
-    
+
+# IMPLEMENTING THE ALGORITHM
+
+def encode(RS_n, RS_k , RS_m, irreducible_p):
+    """
+    RS_n (Int) - RS codeword length
+    RS_k (Int) - RS original message length
+    RS_m (Int) - Symbol length in bits 
+    irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
+    """
+
+    irpol = GF_Polynomial(irreducible_p)
+    GF = Galois_Field(RS_m, irpol)
+
+    print(f"Element table: {GF.elem_table}")
+
+    genpol = gen_poly(GF, (RS_n - RS_k)) 
+
+    print(f"Generator polynomial {genpol}")
+
 
 
 # global definitions for RS(15, 11) with GF(16) and m is 4 bits
@@ -192,18 +210,12 @@ n = 15
 k = 11
 m = int(math.log(n+1,2))
 
+n_DVB = 255
+k_DVB = 239
+m_DVB = int(math.log(n_DVB+1,2))
 
-# Irreducible polynomial is p(x) = x^4 + X + 1 and degree matches m 
-#irpol = GF_Polynomial('100011101') for GF(256) ie GF(2^8) other example works!!
-irpol = GF_Polynomial('10011')
+encode(n, k ,m , '10011')
 
-GF = Galois_Field(m, irpol)
-print(GF.elem_table)
-print(GF.inverse_table)
+#encode(n_DVB, k_DVB ,m_DVB , '100011101')
 
-print(GF.mult(10,13))
-
-# maybe test another value for this
-print(GF.div(11, 10))
-gen_poly(GF, (n-k))
 
