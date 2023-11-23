@@ -215,6 +215,8 @@ def message_to_int_list():
 
 def encode(RS_n, RS_k , RS_m, irreducible_p, message):
     """
+    Returns the message encoded by RS(n,k) with chosen irreducible polynomial
+
     RS_n (Int) - RS codeword length
     RS_k (Int) - RS original message length
     RS_m (Int) - Symbol length in bits 
@@ -232,15 +234,31 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, message):
     print(f"Generator polynomial {gx}")
 
     # We have message 
-    mx = message
+    mx = message.copy()
     mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
 
-    # Remainder of mx.x^(n-k) / gx
+    # Remainder of mx.x^(n-k) / gx and of degree (n-k)
     rx = poly_divide_r(GF, mx, gx)
     print(f"Remainder of mx.x^(n-k) / gx is {rx}")
 
+    message.extend(rx) # equivalent to adding remainder to mx.x^(n-k)
+
+    print(f"Encoded message : {message}")
+    return message
+
     
+def check_syndromes(rx, GF, gen_degree):
+    """
+    Check the syndromes of the transimitted message to find the errors
+
+    rx (Int[]) - the recieved message to decode
+    GF (Galois_Field) -  Galois Field we are working in
+    gen_degree (Int) - degree of the generator polynomial ie n-k
     
+    """
+
+    # We evaluate rx at each alpha^i from the generator polynomial
+
 
 
 
