@@ -132,29 +132,6 @@ class Galois_Field():
         b_inverse = self.inverse_table[b_index+1] 
 
         return self.mult(a, b_inverse)
-    
-
-# class e_Polynomial():
-#     # This is a polynomial where all the coefficients are elements of the Galois Field
-
-#     def __init__(self, GF, coef):
-#         """
-#         GF (Galois_Field) -  Galois Field we are working in
-#         coeff (Int[]) - list of the coefficients which are all GF elements
-#         """
-#         self.coef = coef
-    
-#     def __str__(self):
-#         return f"e_Polynomial {self.coef}"
-    
-#     def mult(a, b):
-#         """
-#         This multiplies two polynomials togther ensuring resulting coefficinets are in the GF
-#         a,b (Int) - e_Polynomials to be multiplied together to return another GF element
-#         """
-
-#         result = a
-
 
 
 def gen_poly(GF, gen_degree):
@@ -183,25 +160,87 @@ def gen_poly(GF, gen_degree):
 
     return result
 
+def remove_zeros(poly):
+    """
+    Take polynomial with leading 0 terms and removes so in simplist form
+    poly (Int[]) - list of coefficients
+    """
+    non_zero = 0
+    for i in poly:
+        if i==0:
+            non_zero +=1
+        else:
+            break
+            
+    return poly[non_zero:]
+
+
+
+
+def poly_divide_r(GF, mx, gx):
+    """
+    This takes the polynomial mx and divides it by polynomial gx to find the remainder rx
+    
+    GF (Galois_Field) -  Galois Field we are working in
+    mx (Int[]) - Polynomial to be divided
+    gx (Int[]) - Polynomial to divide by
+    """
+    remainder= mx
+    gx_len = len(gx)
+
+    # ie while we can keep dividing
+    # mulitplies gx to make it same as most significant term as remainder in last step
+    # then subtract to form new remainder
+    while len(remainder) >= gx_len:
+        # multiply gx by highest intermediate last term - we start with mx 
+        to_subtract = [GF.mult(i, remainder[0]) for i in gx]
+
+        for i in range(gx_len):
+            remainder[i] = GF.add(remainder[i], to_subtract[i]) # as addition same as subtraction
+        remainder = remove_zeros(remainder)
+    
+    return remainder
+    
+
+
+def message_to_int_list():
+    """
+    This might take say string of binary which should be mbits x message length k in length
+    Then divides this up into mbits and makes a lits of ints 
+    """
+    None
+
 
 # IMPLEMENTING THE ALGORITHM
 
-def encode(RS_n, RS_k , RS_m, irreducible_p):
+def encode(RS_n, RS_k , RS_m, irreducible_p, message):
     """
     RS_n (Int) - RS codeword length
     RS_k (Int) - RS original message length
     RS_m (Int) - Symbol length in bits 
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
+    
+    message (Int[]) - List of integers of message (for now might convert from binary later)
     """
 
     irpol = GF_Polynomial(irreducible_p)
     GF = Galois_Field(RS_m, irpol)
+    #print(f"Element table: {GF.elem_table}")
+    
+    # Creates generator polnomial
+    gx = gen_poly(GF, (RS_n - RS_k)) 
+    print(f"Generator polynomial {gx}")
 
-    print(f"Element table: {GF.elem_table}")
+    # We have message 
+    mx = message
+    mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
 
-    genpol = gen_poly(GF, (RS_n - RS_k)) 
+    # Remainder of mx.x^(n-k) / gx
+    rx = poly_divide_r(GF, mx, gx)
+    print(f"Remainder of mx.x^(n-k) / gx is {rx}")
 
-    print(f"Generator polynomial {genpol}")
+    
+    
 
 
 
@@ -210,11 +249,16 @@ n = 15
 k = 11
 m = int(math.log(n+1,2))
 
+message = [1,2,3,4,5,6,7,8,9,10,11]
+
+
 n_DVB = 255
 k_DVB = 239
 m_DVB = int(math.log(n_DVB+1,2))
 
-encode(n, k ,m , '10011')
+
+
+encode(n, k , m , '10011', message)
 
 #encode(n_DVB, k_DVB ,m_DVB , '100011101')
 
