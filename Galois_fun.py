@@ -175,8 +175,6 @@ def remove_zeros(poly):
     return poly[non_zero:]
 
 
-
-
 def poly_divide_r(GF, mx, gx):
     """
     This takes the polynomial mx and divides it by polynomial gx to find the remainder rx
@@ -213,7 +211,7 @@ def message_to_int_list():
 
 # IMPLEMENTING THE ALGORITHM
 
-def encode(RS_n, RS_k , RS_m, irreducible_p, message):
+def encode(RS_n, RS_k , RS_m, irreducible_p, tx):
     """
     Returns the message encoded by RS(n,k) with chosen irreducible polynomial
 
@@ -222,7 +220,7 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, message):
     RS_m (Int) - Symbol length in bits 
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
     
-    message (Int[]) - List of integers of message (for now might convert from binary later)
+    tx (Int[]) - List of integers of tx message (for now might convert from binary later)
     """
 
     irpol = GF_Polynomial(irreducible_p)
@@ -234,32 +232,76 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, message):
     print(f"Generator polynomial {gx}")
 
     # We have message 
-    mx = message.copy()
+    mx = tx.copy()
     mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
 
     # Remainder of mx.x^(n-k) / gx and of degree (n-k)
     rx = poly_divide_r(GF, mx, gx)
     print(f"Remainder of mx.x^(n-k) / gx is {rx}")
 
-    message.extend(rx) # equivalent to adding remainder to mx.x^(n-k)
+    tx.extend(rx) # equivalent to adding remainder to mx.x^(n-k)
 
-    print(f"Encoded message : {message}")
-    return message
+    print(f"Encoded message : {tx}")
+    return tx
+
+
+def GF_horner(GF, x, poly):
+    """
+    Evaluate polynomials using horners method within the Galois Field
+    uses say 2x^3 - 6x^2 + 2x - 1 = ((2x - 6)x + 2)x - 1
+
+    GF (Galois_Field) -  Galois Field we are working in
+    x (Int) - Galois Field element we are evaluating at
+    poly (Int[]) - The pollynomial we are evaluating
+    """
+
+    value = poly[0] # if degree 0 then this is the result
+
+    for i in range(1, len(poly)):
+        value = GF.mult(value, x) # multiply by what we evaluating at
+        value = GF.add(value, poly[i])
+    
+    return value
 
     
-def check_syndromes(rx, GF, gen_degree):
+def check_syndromes(GF, rx, gen_degree):
     """
     Check the syndromes of the transimitted message to find the errors
 
-    rx (Int[]) - the recieved message to decode
     GF (Galois_Field) -  Galois Field we are working in
+    rx (Int[]) - the recieved message to decode
     gen_degree (Int) - degree of the generator polynomial ie n-k
-    
+
+    syndromes (Int[]) - list of integer syndromes for each root
     """
 
     # We evaluate rx at each alpha^i from the generator polynomial
+    gen_roots = GF.elem_table[1:gen_degree+1]
+    syndromes = []
+
+    for root in gen_roots:
+        syndromes.append(GF_horner(GF, root, rx))
+ 
+    return syndromes
 
 
+def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
+    """
+    Returns the message decoded from RS(n,k) with chosen irreducible polynomial
+
+    RS_n (Int) - RS codeword length
+    RS_k (Int) - RS original message length
+    RS_m (Int) - Symbol length in bits 
+    irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
+    
+    rx (Int[]) - List of integers of rx message (for now might convert from binary later)
+    """
+
+    irpol = GF_Polynomial(irreducible_p)
+    GF = Galois_Field(RS_m, irpol)
+
+    syndromes = check_syndromes(GF, rx, (RS_n-RS_k))
+    print(syndromes)
 
 
 # global definitions for RS(15, 11) with GF(16) and m is 4 bits
@@ -276,7 +318,12 @@ m_DVB = int(math.log(n_DVB+1,2))
 
 
 
-encode(n, k , m , '10011', message)
+rx = encode(n, k , m , '10011', message)
+# should perturb 
+bleh = [1, 2, 3, 4, 5, 11, 7, 8, 9, 10, 11, 3, 1, 12, 12]
+decode(n, k , m , '10011', bleh)
+
+
 
 #encode(n_DVB, k_DVB ,m_DVB , '100011101')
 
