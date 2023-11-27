@@ -42,6 +42,18 @@ def remove_zeros(poly):
             
     return poly[non_zero:]
 
+def add_polys(GF, ax, bx):
+    """
+    Adds the polynomial ax and bx together
+    """
+    result = max([ax, bx], key=len)
+
+    small_degree = min(len(ax), len(bx))
+    for i in range(1, small_degree+1):
+        result[-i] = GF.add(ax[-i], bx[-i])
+
+    return result
+
 
 def poly_divide_r(GF, mx, gx):
     """
@@ -152,6 +164,50 @@ def check_syndromes(GF, rx, gen_degree):
  
     return syndromes
 
+def berlekamp(GF, syndromes, added_bits):
+    """
+    syndomes - list of syndromes
+    added_bits - ie n-k
+    
+    """
+    K = 1 # step parameter
+    L = 0 # tracks order of equations
+    vx = [1] # error locator polynomial - set to 1
+    cx = [1,0] # correction polynomial - set to x
+
+    while (K <= added_bits):
+        #  print(f"\nStatus: K:{K} L:{L} cx:{cx} vx:{vx}")
+
+        e = syndromes[K-1]
+        for i in range(1, L+1):
+            # note v(x) in literature indicies labelled 0 as lowest power element 
+            # hence the -i-1 on the vx as 'going backwards'
+            e = GF.add(e, GF.mult(syndromes[K-1-i], vx[-i-1]))
+
+        if e != 0:
+            # new approximation for error locator polynomial - new_vx = vx + (e * cx)
+            new_vx = [GF.mult(e,i) for i in cx]
+            new_vx = add_polys(GF, vx, new_vx)
+
+            if ((2*L) < K):
+                L = K-L
+                cx = [GF.div(i, e) for i in vx] # divide cx by e 
+            vx = new_vx
+
+        cx.append(0) # equivalent to mulitplying by x
+        K += 1
+    
+    # print(f"\nStep final : {K} {L} {cx} {vx}")
+    return vx
+
+           
+
+
+   
+            
+
+
+
 
 def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     """
@@ -170,6 +226,11 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
 
     syndromes = check_syndromes(GF, rx, (RS_n-RS_k))
     print(syndromes)
+
+    vx = berlekamp(GF, syndromes, (RS_n-RS_k))
+    print(vx)
+
+
 
 
 # global definitions for RS(15, 11) with GF(16) and m is 4 bits
