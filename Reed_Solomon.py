@@ -166,11 +166,14 @@ def check_syndromes(GF, rx, gen_degree):
 
 def berlekamp(GF, syndromes, added_bits):
     """
-    syndomes - list of syndromes
-    added_bits - ie n-k
+    This finds the error locator polynomial - a solution to the linear equations of the syndromes 
+    GF (Galois_Field) -  Galois Field we are working in
+    syndromes (Int[]) - list of integer syndromes 
+    added_bits (Int) - the extra bits added to make codeword ie 2t=n-k
     
+    vx (Int[]) - the error locator polynomial
     """
-    K = 1 # step parameter
+    K = 1 # step parameter - used to track which syndome we are up to
     L = 0 # tracks order of equations
     vx = [1] # error locator polynomial - set to 1
     cx = [1,0] # correction polynomial - set to x
@@ -184,13 +187,14 @@ def berlekamp(GF, syndromes, added_bits):
             # hence the -i-1 on the vx as 'going backwards'
             e = GF.add(e, GF.mult(syndromes[K-1-i], vx[-i-1]))
 
+        # if e = 0, assumes no error and skips to increment K
         if e != 0:
             # new approximation for error locator polynomial - new_vx = vx + (e * cx)
             new_vx = [GF.mult(e,i) for i in cx]
             new_vx = add_polys(GF, vx, new_vx)
 
             if ((2*L) < K):
-                L = K-L
+                L = K-L # limits L to number of syndromes we have
                 cx = [GF.div(i, e) for i in vx] # divide cx by e 
             vx = new_vx
 
@@ -199,14 +203,6 @@ def berlekamp(GF, syndromes, added_bits):
     
     # print(f"\nStep final : {K} {L} {cx} {vx}")
     return vx
-
-           
-
-
-   
-            
-
-
 
 
 def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
@@ -227,6 +223,7 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     syndromes = check_syndromes(GF, rx, (RS_n-RS_k))
     print(syndromes)
 
+    # Calculate error-locator polynomial using berlekamp
     vx = berlekamp(GF, syndromes, (RS_n-RS_k))
     print(vx)
 
