@@ -45,6 +45,10 @@ def remove_zeros(poly):
 def add_polys(GF, ax, bx):
     """
     Adds the polynomial ax and bx together
+
+    GF (Galois_Field) -  Galois Field we are working in
+    ax (Int[]) - first polynomial
+    bx (Int[]) - second polynomial
     """
     result = max([ax, bx], key=len)
 
@@ -53,6 +57,19 @@ def add_polys(GF, ax, bx):
         result[-i] = GF.add(ax[-i], bx[-i])
 
     return result
+
+def mult_polys(GF, ax, bx):
+
+    len_ax = len(ax)
+    len_bx = len(bx)
+    prod = [0] * (len_ax + len_bx -1)
+
+    for i in range(len_ax):
+        for j in range(len_bx):
+            to_add = GF.mult(ax[i], bx[j])
+            prod[i+j] = GF.add(prod[i+j], to_add)
+
+    return prod
 
 
 def poly_divide_r(GF, mx, gx):
@@ -204,6 +221,26 @@ def berlekamp_massey(GF, syndromes, added_bits):
     # print(f"\nStep final : {K} {L} {cx} {vx}")
     return vx
 
+def error_mag_poly(GF, vx, sx, added_bits):
+    """
+    This finds the error magnitude polynomial which is calcluated
+    by using the error locator polynomial and the syndrome polynomial
+
+    GF (Galois_Field) -  Galois Field we are working in
+    vx (Int[]) - the error locator polynomial
+    sx (Int[]) - the syndrome polynomial
+    added_bits (Int) - the extra bits added to make codeword ie 2t=n-k
+
+    """
+    # calcualated via first multiplying syndrome polynomial and error locator
+    qx = mult_polys(GF, sx, vx)
+
+    # then the error magnitude polynomial is this modulo x^2t
+    # ie remove anything of or past the power x^2t
+    qx = qx[-added_bits:]
+    qx = remove_zeros(qx)  
+    return qx
+
 def find_inv_roots(GF, vx):
     """
     The inverse of the roots of the berlekamp massey error locator polynomial
@@ -227,6 +264,7 @@ def find_inv_roots(GF, vx):
             roots.append(i)
 
     return roots
+
 
 
 def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
@@ -255,6 +293,11 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     roots = find_inv_roots(GF, vx)
     print(f"Error locations are the powers: {roots}")
 
+    sx = syndromes.copy()
+    sx.reverse() # syndrome polynomial has coefficients of the syndromes
+    qx = error_mag_poly(GF, vx, sx , (RS_n-RS_k))
+    print(f"Error magnitude polynomial: {qx}")
+    
     
 
 
