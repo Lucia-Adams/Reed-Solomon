@@ -232,6 +232,7 @@ def error_mag_poly(GF, vx, sx, added_bits):
     sx (Int[]) - the syndrome polynomial
     added_bits (Int) - the extra bits added to make codeword ie 2t=n-k
 
+    qx (Int[]) - the error magnitude polynomial
     """
     # calcualated via first multiplying syndrome polynomial and error locator
     qx = mult_polys(GF, sx, vx)
@@ -271,7 +272,13 @@ def forney_algorithm(GF, error_locations, vx, qx):
     This uses the error locator polynomial and the error value polynomial
     to calulate the error value
     The forney algorithm is actually based on lagrange interpolation!
+
+    GF (Galois_Field) -  Galois Field we are working in
+    error_locations (Int[]) - powers in codeword polynomial at which the errors are located
+    vx (Int[]) - the error locator polynomial
+    qx (Int[]) - the error magnitude polynomial
     """
+    error_values = []
 
     # ecah error location is the power of alpha that is Xj in literarture
     for l in error_locations:
@@ -294,7 +301,9 @@ def forney_algorithm(GF, error_locations, vx, qx):
         error = GF.div(qx_eval, vx_deriv_eval)
         error = GF.mult(error, l_elem)
         
-        print(error)
+        error_values.append(error)
+    
+    return error_values
 
 
 
@@ -305,9 +314,10 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     RS_n (Int) - RS codeword length
     RS_k (Int) - RS original message length
     RS_m (Int) - Symbol length in bits 
-    irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
-    
+    irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field  
     rx (Int[]) - List of integers of rx message (for now might convert from binary later)
+
+    corrected (Int[]) - returns the original message with any errors corrected
     """
 
     irpol = Binary_Polynomial(irreducible_p)
@@ -321,6 +331,7 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     print(f"Error locator polynomial: {vx}")
 
     #  Now solve the error locator polynomial 
+    #  this finds the powers in the codeword at which the errors occur
     error_locations = find_inv_roots(GF, vx)
     print(f"Error locations are the powers: {error_locations}")
 
@@ -329,31 +340,49 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     qx = error_mag_poly(GF, vx, sx , (RS_n-RS_k))
     print(f"Error magnitude polynomial: {qx}")
 
-    forney_algorithm(GF, error_locations, vx, qx)
+    errors = forney_algorithm(GF, error_locations, vx, qx)
+    print(errors)
     
-    
+    # Now we correct the errors!!
+    # Just add (subtract) the errors from the recieved message
+    for i in range(len(error_locations)):
+        place = error_locations[i]
+        print(rx[-place-1])
+        rx[-place-1] = GF.add(rx[-place-1], errors[i])
+    # rx is now the corrceted polynomial!
+     
+    corrected = rx[:-(RS_n-RS_k)]
+    return corrected
 
 
-# global definitions for RS(15, 11) with GF(16) and m is 4 bits
-n = 15
-k = 11
-m = int(math.log(n+1,2))
+def demo():
+    n = 15
+    k = 11
+    m = int(math.log(n+1,2))
+   
+    message = [1,2,3,4,5,6,7,8,9,10,11]
+    print(f"The message to send is: {message}")
 
-message = [1,2,3,4,5,6,7,8,9,10,11]
+    # encodes message using RS(n,k) = RS(15,11)
+    # with irreducible polynomial x^4 + x + 1 ie '10011'
+    rx = encode(n, k , m , '10011', message)
+    print(f"The encoded message to send is: {rx}")
+
+    # here we are simulating errors in transmission
+    rx[5] = 11
+    rx[12] = 1
+
+    print(f"In 'transimssion' this changes to : {rx}")
+    corrected = decode(n, k , m , '10011', rx)
+    print(f"This is then corrceted back to : {corrected}")
+
+# Here we run the demo!
+demo()
 
 
-n_DVB = 255
-k_DVB = 239
-m_DVB = int(math.log(n_DVB+1,2))
-
-
-
-rx = encode(n, k , m , '10011', message)
-# should perturb 
-bleh = [1, 2, 3, 4, 5, 11, 7, 8, 9, 10, 11, 3, 1, 12, 12]
-decode(n, k , m , '10011', bleh)
-
-
+# n_DVB = 255
+# k_DVB = 239
+# m_DVB = int(math.log(n_DVB+1,2))
 
 #encode(n_DVB, k_DVB ,m_DVB , '100011101')
 
