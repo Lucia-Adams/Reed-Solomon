@@ -106,9 +106,7 @@ def message_to_int_list():
     None
 
 
-# IMPLEMENTING THE ALGORITHM
-
-def encode(RS_n, RS_k , RS_m, irreducible_p, tx):
+def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
     """
     Returns the message encoded by RS(n,k) with chosen irreducible polynomial
 
@@ -116,17 +114,18 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, tx):
     RS_k (Int) - RS original message length
     RS_m (Int) - Symbol length in bits 
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
+    verbose (Boolean) - if set to true then will print out intermediate results
     
     tx (Int[]) - List of integers of tx message (for now might convert from binary later)
     """
+    verbose_string = "\n -- ENCODING -- \n"
 
     irpol = Binary_Polynomial(irreducible_p)
     GF = Galois_Field(RS_m, irpol)
-    #print(f"Element table: {GF.elem_table}")
     
     # Creates generator polnomial
     gx = gen_poly(GF, (RS_n - RS_k)) 
-    print(f"Generator polynomial {gx}")
+    verbose_string += (f"Generator polynomial {gx}\n")
 
     # We have message 
     mx = tx.copy()
@@ -134,11 +133,13 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, tx):
 
     # Remainder of mx.x^(n-k) / gx and of degree (n-k)
     rx = poly_divide_r(GF, mx, gx)
-    print(f"Remainder of mx.x^(n-k) / gx is {rx}")
+    verbose_string +=(f"Remainder of mx.x^(n-k) / gx is {rx}\n")
 
     tx.extend(rx) # equivalent to adding remainder to mx.x^(n-k)
 
-    print(f"Encoded message : {tx}")
+    if verbose:
+        print(verbose_string)
+
     return tx
 
 
@@ -307,7 +308,7 @@ def forney_algorithm(GF, error_locations, vx, qx):
 
 
 
-def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
+def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     """
     Returns the message decoded from RS(n,k) with chosen irreducible polynomial
 
@@ -316,74 +317,86 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     RS_m (Int) - Symbol length in bits 
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field  
     rx (Int[]) - List of integers of rx message (for now might convert from binary later)
+    verbose (Boolean) - if set to true then will print out intermediate results
 
     corrected (Int[]) - returns the original message with any errors corrected
     """
+    verb_string = "\n -- DECODING -- \n"
 
     irpol = Binary_Polynomial(irreducible_p)
     GF = Galois_Field(RS_m, irpol)
 
     syndromes = check_syndromes(GF, rx, (RS_n-RS_k))
-    print(f"Syndromes are: {syndromes}")
+    verb_string += (f"Syndromes are: {syndromes}\n")
 
     # Calculate error-locator polynomial using berlekamp
     vx = berlekamp_massey(GF, syndromes, (RS_n-RS_k))
-    print(f"Error locator polynomial: {vx}")
+    verb_string += (f"Error locator polynomial: {vx}\n")
 
     #  Now solve the error locator polynomial 
     #  this finds the powers in the codeword at which the errors occur
     error_locations = find_inv_roots(GF, vx)
-    print(f"Error locations are the powers: {error_locations}")
+    verb_string += (f"Error locations are at the message polynomial powers: {error_locations}\n")
 
     sx = syndromes.copy()
     sx.reverse() # syndrome polynomial has coefficients of the syndromes
     qx = error_mag_poly(GF, vx, sx , (RS_n-RS_k))
-    print(f"Error magnitude polynomial: {qx}")
+    verb_string += (f"Error magnitude polynomial: {qx}\n")
 
     errors = forney_algorithm(GF, error_locations, vx, qx)
-    print(errors)
     
     # Now we correct the errors!!
     # Just add (subtract) the errors from the recieved message
     for i in range(len(error_locations)):
         place = error_locations[i]
-        print(rx[-place-1])
         rx[-place-1] = GF.add(rx[-place-1], errors[i])
     # rx is now the corrceted polynomial!
+
+    if verbose:
+        print(verb_string)
      
     corrected = rx[:-(RS_n-RS_k)]
     return corrected
 
 
-def demo():
+def demo(verbose=True):
+    """
+    This is just to demonstrate using the functions with an example
+
+    verbose (Boolean) - If true, gives extra details on inner computations 
+    """
+
+    print("\nREED SOLOMON DEMONSTRATION")
     n = 15
     k = 11
     m = int(math.log(n+1,2))
+
+    print(f"Using RS({n},{k}) encoding with {m} bits\n")
    
     message = [1,2,3,4,5,6,7,8,9,10,11]
     print(f"The message to send is: {message}")
 
     # encodes message using RS(n,k) = RS(15,11)
     # with irreducible polynomial x^4 + x + 1 ie '10011'
-    rx = encode(n, k , m , '10011', message)
-    print(f"The encoded message to send is: {rx}")
+    rx = encode(n, k , m , '10011', message, verbose)
+    print(f"The encoded message to send is: {rx}\n")
 
+    print("-- TRANSMISSION -- \n")
     # here we are simulating errors in transmission
     rx[5] = 11
     rx[12] = 1
 
-    print(f"In 'transimssion' this changes to : {rx}")
-    corrected = decode(n, k , m , '10011', rx)
-    print(f"This is then corrceted back to : {corrected}")
+    print(f"In 'transmission' this changes to : {rx}")
+    corrected = decode(n, k , m , '10011', rx, verbose)
+    print(f"This is then corrected back to : {corrected}")
 
-# Here we run the demo!
+# Here we run the demo! 
 demo()
-
-
+ 
+#  Note say the inputs used for DVB-T standard
 # n_DVB = 255
 # k_DVB = 239
 # m_DVB = int(math.log(n_DVB+1,2))
 
-#encode(n_DVB, k_DVB ,m_DVB , '100011101')
 
 
