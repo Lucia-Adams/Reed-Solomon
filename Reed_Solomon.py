@@ -225,6 +225,7 @@ def error_mag_poly(GF, vx, sx, added_bits):
     """
     This finds the error magnitude polynomial which is calcluated
     by using the error locator polynomial and the syndrome polynomial
+    This is often denoted as capital omega in literature
 
     GF (Galois_Field) -  Galois Field we are working in
     vx (Int[]) - the error locator polynomial
@@ -265,6 +266,36 @@ def find_inv_roots(GF, vx):
 
     return roots
 
+def forney_algorithm(GF, error_locations, vx, qx):
+    """
+    This uses the error locator polynomial and the error value polynomial
+    to calulate the error value
+    The forney algorithm is actually based on lagrange interpolation!
+    """
+
+    # ecah error location is the power of alpha that is Xj in literarture
+    for l in error_locations:
+        l_elem = GF.elem_table[l+1]
+        l_inv = GF.inverse_table[l+1]
+
+        # evaluate qx at each error locators inverse
+        qx_eval = GF_horner(GF, l_inv, qx)
+
+        # evaluate derivative of vx at each error locators inverse
+        # this is equivalent to setting even powers of vx to zero and 
+        # then dividing by x = error locators inverse
+        vx_deriv_eval = vx.copy()
+        for i in range(1, len(vx)+1, 2):
+            vx_deriv_eval[-i] = 0 # sets even powers to 0
+        vx_deriv_eval.pop() # divides by x
+        vx_deriv_eval = remove_zeros(vx_deriv_eval)
+        vx_deriv_eval = GF_horner(GF, l_inv, vx_deriv_eval)
+        
+        error = GF.div(qx_eval, vx_deriv_eval)
+        error = GF.mult(error, l_elem)
+        
+        print(error)
+
 
 
 def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
@@ -290,13 +321,15 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     print(f"Error locator polynomial: {vx}")
 
     #  Now solve the error locator polynomial 
-    roots = find_inv_roots(GF, vx)
-    print(f"Error locations are the powers: {roots}")
+    error_locations = find_inv_roots(GF, vx)
+    print(f"Error locations are the powers: {error_locations}")
 
     sx = syndromes.copy()
     sx.reverse() # syndrome polynomial has coefficients of the syndromes
     qx = error_mag_poly(GF, vx, sx , (RS_n-RS_k))
     print(f"Error magnitude polynomial: {qx}")
+
+    forney_algorithm(GF, error_locations, vx, qx)
     
     
 
