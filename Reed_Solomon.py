@@ -1,4 +1,5 @@
 import math
+import random
 from GF_and_Polynomials import *
 
 
@@ -359,7 +360,7 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     return corrected
 
 
-def demo(verbose=True):
+def demo(verbose=True, rand=True):
     """
     This is just to demonstrate using the functions with an example
 
@@ -383,8 +384,16 @@ def demo(verbose=True):
 
     print("-- TRANSMISSION -- \n")
     # here we are simulating errors in transmission
-    rx[5] = 11
-    rx[12] = 1
+    if rand:
+        print("(Randomising errors)")
+        max_errors = (n-k) // 2
+        for i in range(max_errors):
+            error_place = random.randint(1, n)
+            error = random.randint(1, n)
+            rx[error_place] = error    
+    else:
+        rx[5] = 11
+        rx[12] = 1
 
     print(f"In 'transmission' this changes to : {rx}")
     corrected = decode(n, k , m , '10011', rx, verbose)
