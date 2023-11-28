@@ -164,7 +164,7 @@ def check_syndromes(GF, rx, gen_degree):
  
     return syndromes
 
-def berlekamp(GF, syndromes, added_bits):
+def berlekamp_massey(GF, syndromes, added_bits):
     """
     This finds the error locator polynomial - a solution to the linear equations of the syndromes 
     GF (Galois_Field) -  Galois Field we are working in
@@ -204,6 +204,30 @@ def berlekamp(GF, syndromes, added_bits):
     # print(f"\nStep final : {K} {L} {cx} {vx}")
     return vx
 
+def find_inv_roots(GF, vx):
+    """
+    The inverse of the roots of the berlekamp massey error locator polynomial
+    provide the error locator numbers
+    This goes through and finds these inverses of the roots 
+
+    GF (Galois_Field) -  Galois Field we are working in
+    vx (Int[]) - the error locator polynomial
+
+    roots (Int[]) - List of roots of the polynomial
+    """
+    inverses = GF.inverse_table[1:]
+    roots = []
+
+    # loops through table of inverses to see what evaluates to 0 and is thus a root
+    for i in range(len(inverses)):
+        val = GF_horner(GF, inverses[i], vx)
+        if val == 0:
+            # the value i is the power of the alpha element to which the 
+            # value stored at it is an inverse hence can just add i
+            roots.append(i)
+
+    return roots
+
 
 def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     """
@@ -221,13 +245,17 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx):
     GF = Galois_Field(RS_m, irpol)
 
     syndromes = check_syndromes(GF, rx, (RS_n-RS_k))
-    print(syndromes)
+    print(f"Syndromes are: {syndromes}")
 
     # Calculate error-locator polynomial using berlekamp
-    vx = berlekamp(GF, syndromes, (RS_n-RS_k))
-    print(vx)
+    vx = berlekamp_massey(GF, syndromes, (RS_n-RS_k))
+    print(f"Error locator polynomial: {vx}")
 
+    #  Now solve the error locator polynomial 
+    roots = find_inv_roots(GF, vx)
+    print(f"Error locations are the powers: {roots}")
 
+    
 
 
 # global definitions for RS(15, 11) with GF(16) and m is 4 bits
