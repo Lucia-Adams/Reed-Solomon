@@ -19,7 +19,6 @@ class Binary_Polynomial():
         return len(self.strc) - self.strc.index('1') - 1
     
 
-
 class Galois_Field():
 
     def __init__(self, gf_size_m, irpol):

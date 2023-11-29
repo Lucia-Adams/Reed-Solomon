@@ -1,5 +1,6 @@
 import math
 import random
+import textwrap
 from GF_and_Polynomials import *
 
 
@@ -97,15 +98,6 @@ def poly_divide_r(GF, mx, gx):
     
     return remainder
     
-
-
-def message_to_int_list():
-    """
-    This might take say string of binary which should be mbits x message length k in length
-    Then divides this up into mbits and makes a lits of ints 
-    """
-    None
-
 
 def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
     """
@@ -342,7 +334,7 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     sx = syndromes.copy()
     sx.reverse() # syndrome polynomial has coefficients of the syndromes
     qx = error_mag_poly(GF, vx, sx , (RS_n-RS_k))
-    verb_string += (f"Error magnitude polynomial: {qx}\n")
+    verb_string += (f"Error magnitude polynomial: {qx}")
 
     errors = forney_algorithm(GF, error_locations, vx, qx)
     
@@ -360,11 +352,35 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     return corrected
 
 
+def bin_to_int_list(bin_file, sym_bits):
+    """
+    This takes a file of a binary number, then splits that binary into 
+    symbols defined by sym_bits and puts the integer value of these chunks into a list
+
+    mes_str (String) - message string to convert
+    sym_bits (Int) - size of symbol 
+
+    mes_int (Int[]) - message as a list of ints of sym_bits bits
+    """
+
+    with open(bin_file, 'r') as file:
+        bin_string = file.read()
+
+    padding = (sym_bits - (len(bin_string) % sym_bits)) % sym_bits
+    bin_string += '0'*padding
+    
+    symbol_str = textwrap.wrap(bin_string, 4)
+    mes_int = [int(symb, base=2) for symb in symbol_str]
+
+    return mes_int
+
+
 def demo(verbose=True, rand=True):
     """
     This is just to demonstrate using the functions with an example
 
     verbose (Boolean) - If true, gives extra details on inner computations 
+    rand (Boolean) - If set to True randomises the errors, if False uses set errors 
     """
 
     print("\nREED SOLOMON DEMONSTRATION")
@@ -372,10 +388,15 @@ def demo(verbose=True, rand=True):
     k = 11
     m = int(math.log(n+1,2))
 
-    print(f"Using RS({n},{k}) encoding with {m} bits\n")
-   
-    message = [1,2,3,4,5,6,7,8,9,10,11]
-    print(f"The message to send is: {message}")
+    # demonstrate with the binary in binary.txt 
+    message = bin_to_int_list("binary.txt", 4)
+    # For the sake of this demo, we run RS once for one codeword/packet so
+    # we make the length of the message to be the length of the RS codeword
+    assert len(message) == k
+
+    print(f"This demo uses the binary string of length k*m from binary.txt")
+    print(f"Using RS(n={n},k={k}) encoding with m={m} bits\n")
+    print(f"The message to send is: \n{message} as {m} bit integers")
 
     # encodes message using RS(n,k) = RS(15,11)
     # with irreducible polynomial x^4 + x + 1 ie '10011'
@@ -383,12 +404,12 @@ def demo(verbose=True, rand=True):
     print(f"The encoded message to send is: {rx}\n")
 
     print("-- TRANSMISSION -- \n")
-    # here we are simulating errors in transmission
+    # Here we are simulating errors in transmission
     if rand:
         print("(Randomising errors)")
         max_errors = (n-k) // 2
         for i in range(max_errors):
-            error_place = random.randint(1, n)
+            error_place = random.randint(1, n-1)
             error = random.randint(1, n)
             rx[error_place] = error    
     else:
@@ -397,10 +418,13 @@ def demo(verbose=True, rand=True):
 
     print(f"In 'transmission' this changes to : {rx}")
     corrected = decode(n, k , m , '10011', rx, verbose)
-    print(f"This is then corrected back to : {corrected}")
+    print(f"\nThis is then corrected back to : {corrected}\n")
+
 
 # Here we run the demo! 
 demo()
+
+
  
 #  Note say the inputs used for DVB-T standard
 # n_DVB = 255
@@ -408,4 +432,5 @@ demo()
 # m_DVB = int(math.log(n_DVB+1,2))
 
 
-
+# To do: move polynomial multiplication to new class 
+# Add binary reading to get it into those integer symbols
