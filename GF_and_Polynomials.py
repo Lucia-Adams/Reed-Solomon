@@ -1,9 +1,14 @@
+"""
+This file stores the classes we use for Binary Polynomials, which are used for Galois
+Field elements and a Galois Field Class and it's associated methods
 
-#  This is a polnomial but expressed in binary coefficients
+Binary_Polynomial()
+Galois_Field()
+"""
+#  This is a polynomial but expressed in binary coefficients
 class Binary_Polynomial():
-    # strc =  string coefficient
     def __init__(self, strc):
-        self.strc = strc
+        self.strc = strc # strc =  string coefficient
 
     def __str__(self):
         return f"Binary_Polynomial {self.strc}"
@@ -17,7 +22,7 @@ class Binary_Polynomial():
 
     def degree(self):
         return len(self.strc) - self.strc.index('1') - 1
-    
+
 
 class Galois_Field():
 
@@ -118,7 +123,6 @@ class Galois_Field():
             return -1 
         
         units = self.elem_table[1:] 
-        
         b_index = units.index(b)
         # b = alpha^m inverse element is stored at index m+1 
         b_inverse = self.inverse_table[b_index+1] 

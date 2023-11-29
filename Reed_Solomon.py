@@ -2,7 +2,7 @@ import math
 import random
 import textwrap
 from GF_and_Polynomials import *
-
+from GF_Polynomials import *
 
 def gen_poly(GF, gen_degree):
     """
@@ -14,7 +14,7 @@ def gen_poly(GF, gen_degree):
     gen_roots = GF.elem_table[1:gen_degree+1]
 
     # g(x) = (x-alpa^0)(x-alpha^2)...(x-alpha^n-k-1)
-    # ie g(x) = (x+alpa^0)(x+alpha^2)...(x+alpha^n-k-1) as addition is subtratcion in GF
+    # ie g(x) = (x+alpa^0)(x+alpha^2)...(x+alpha^n-k-1) as addition is subtraction in GF
     # need to expand this but using the field multiplication
 
     # Take first root to get (x-alpha^0)
@@ -29,112 +29,6 @@ def gen_poly(GF, gen_degree):
             result[-i] = GF.add(result[-i], mult_by_root[-i])
 
     return result
-
-def remove_zeros(poly):
-    """
-    Take polynomial with leading 0 terms and removes so in simplist form
-    poly (Int[]) - list of coefficients
-    """
-    non_zero = 0
-    for i in poly:
-        if i==0:
-            non_zero +=1
-        else:
-            break
-            
-    return poly[non_zero:]
-
-def add_polys(GF, ax, bx):
-    """
-    Adds the polynomial ax and bx together
-
-    GF (Galois_Field) -  Galois Field we are working in
-    ax (Int[]) - first polynomial
-    bx (Int[]) - second polynomial
-    """
-    result = max([ax, bx], key=len)
-
-    small_degree = min(len(ax), len(bx))
-    for i in range(1, small_degree+1):
-        result[-i] = GF.add(ax[-i], bx[-i])
-
-    return result
-
-def mult_polys(GF, ax, bx):
-
-    len_ax = len(ax)
-    len_bx = len(bx)
-    prod = [0] * (len_ax + len_bx -1)
-
-    for i in range(len_ax):
-        for j in range(len_bx):
-            to_add = GF.mult(ax[i], bx[j])
-            prod[i+j] = GF.add(prod[i+j], to_add)
-
-    return prod
-
-
-def poly_divide_r(GF, mx, gx):
-    """
-    This takes the polynomial mx and divides it by polynomial gx to find the remainder rx
-    
-    GF (Galois_Field) -  Galois Field we are working in
-    mx (Int[]) - Polynomial to be divided
-    gx (Int[]) - Polynomial to divide by
-    """
-    remainder= mx
-    gx_len = len(gx)
-
-    # ie while we can keep dividing
-    # mulitplies gx to make it same as most significant term as remainder in last step
-    # then subtract to form new remainder
-    while len(remainder) >= gx_len:
-        # multiply gx by highest intermediate last term - we start with mx 
-        to_subtract = [GF.mult(i, remainder[0]) for i in gx]
-
-        for i in range(gx_len):
-            remainder[i] = GF.add(remainder[i], to_subtract[i]) # as addition same as subtraction
-        remainder = remove_zeros(remainder)
-    
-    return remainder
-    
-
-def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
-    """
-    Returns the message encoded by RS(n,k) with chosen irreducible polynomial
-
-    RS_n (Int) - RS codeword length
-    RS_k (Int) - RS original message length
-    RS_m (Int) - Symbol length in bits 
-    irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
-    verbose (Boolean) - if set to true then will print out intermediate results
-    
-    tx (Int[]) - List of integers of tx message (for now might convert from binary later)
-    """
-    verbose_string = "\n -- ENCODING -- \n"
-
-    irpol = Binary_Polynomial(irreducible_p)
-    GF = Galois_Field(RS_m, irpol)
-    
-    # Creates generator polnomial
-    gx = gen_poly(GF, (RS_n - RS_k)) 
-    verbose_string += (f"Generator polynomial {gx}\n")
-
-    # We have message 
-    mx = tx.copy()
-    mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
-
-    # Remainder of mx.x^(n-k) / gx and of degree (n-k)
-    rx = poly_divide_r(GF, mx, gx)
-    verbose_string +=(f"Remainder of mx.x^(n-k) / gx is {rx}\n")
-
-    tx.extend(rx) # equivalent to adding remainder to mx.x^(n-k)
-
-    if verbose:
-        print(verbose_string)
-
-    return tx
-
 
 def GF_horner(GF, x, poly):
     """
@@ -153,7 +47,6 @@ def GF_horner(GF, x, poly):
         value = GF.add(value, poly[i])
     
     return value
-
     
 def check_syndromes(GF, rx, gen_degree):
     """
@@ -300,6 +193,42 @@ def forney_algorithm(GF, error_locations, vx, qx):
     return error_values
 
 
+def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
+    """
+    Returns the message encoded by RS(n,k) with chosen irreducible polynomial
+
+    RS_n (Int) - RS codeword length
+    RS_k (Int) - RS original message length
+    RS_m (Int) - Symbol length in bits 
+    irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
+    verbose (Boolean) - if set to true then will print out intermediate results
+    
+    tx (Int[]) - List of integers of tx message (for now might convert from binary later)
+    """
+    verbose_string = "\n -- ENCODING -- \n"
+
+    irpol = Binary_Polynomial(irreducible_p)
+    GF = Galois_Field(RS_m, irpol)
+    
+    # Creates generator polnomial
+    gx = gen_poly(GF, (RS_n - RS_k)) 
+    verbose_string += (f"Generator polynomial {gx}\n")
+
+    # We have message 
+    mx = tx.copy()
+    mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
+
+    # Remainder of mx.x^(n-k) / gx and of degree (n-k)
+    rx = poly_divide_r(GF, mx, gx)
+    verbose_string +=(f"Remainder of mx.x^(n-k) / gx is {rx}\n")
+
+    tx.extend(rx) # equivalent to adding remainder to mx.x^(n-k)
+
+    if verbose:
+        print(verbose_string)
+
+    return tx
+
 
 def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     """
@@ -421,16 +350,6 @@ def demo(verbose=True, rand=True):
     print(f"\nThis is then corrected back to : {corrected}\n")
 
 
-# Here we run the demo! 
-demo()
-
-
- 
-#  Note say the inputs used for DVB-T standard
-# n_DVB = 255
-# k_DVB = 239
-# m_DVB = int(math.log(n_DVB+1,2))
-
-
-# To do: move polynomial multiplication to new class 
-# Add binary reading to get it into those integer symbols
+if __name__ == "__main__":
+    # Here we run the demo! 
+    demo()
