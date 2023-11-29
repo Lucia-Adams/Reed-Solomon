@@ -5,8 +5,10 @@ Field elements and a Galois Field Class and it's associated methods
 Binary_Polynomial()
 Galois_Field()
 """
-#  This is a polynomial but expressed in binary coefficients
+
 class Binary_Polynomial():
+    #  This is a polynomial but expressed in binary coefficients
+
     def __init__(self, strc):
         self.strc = strc # strc =  string coefficient
 
@@ -25,6 +27,7 @@ class Binary_Polynomial():
 
 
 class Galois_Field():
+    #  This is a class to represent a chosen Galois Field
 
     def __init__(self, gf_size_m, irpol):
         """
@@ -37,16 +40,19 @@ class Galois_Field():
         self.elem_table = self.generate_gf_elem_table()
         self.inverse_table = self.generate_gf_elem_inverse_table()
 
+        # checks this is true when defining to ensure it is valid
         assert irpol.degree() == gf_size_m
 
 
     def generate_gf_elem_table(self):
         """
         Generates table of all the elements with irreducible polynomial of degree m
+
+        table (Int[]) - list of GF(2^m) elements length 2^m
         """
-        # have first two elements of table standard, so need GF-2 more elements 
+        # Have first two elements of table standard, so need GF-2 more elements 
         table = [0, 1] 
-        # This is the highest degree term of the irreducible polynomial is Polynomial('1' + ('0' * irpol.degree())) ie integer is 2^degree = size galois field
+        # Get highest degree term of the irreducible polynomial 
         high_deg = 2**(self.irpol.degree())
         # Holds integer version of rest of the irreducible polynomial ie eveything but it's highest degree
         rest = self.irpol.denary() - high_deg
@@ -68,9 +74,12 @@ class Galois_Field():
     
     def generate_gf_elem_inverse_table(self):
         """
-        One way to do GF division is by using inverses ie the element multiplied by its inverse produce 1 = alpha^0
-        gf_elem_table (Int[]) - list of GF(2^m) elements length 2^m
-        The inverse of alpha^m will be stored at index m+1 in the table (as first element is 0 for non exisitent logarithm)
+        One way to do GF division is by using inverses ie the element multiplied by its 
+        inverse produce 1 = alpha^0
+        The inverse of alpha^m will be stored at index m+1 in the table 
+        (as first element is 0 for non exisitent logarithm)
+
+        inverse_table (Int[]) - list of GF(2^m) inverse elements
         """
 
         gf_size = self.size
@@ -89,6 +98,8 @@ class Galois_Field():
         """
         Addition and subtarction and XOR are equivalent in the Galois Field 
         a,b (Int) - Galois Field elements to add
+
+        returns (Int) result
         """
         return a^b
 
@@ -97,6 +108,8 @@ class Galois_Field():
         """
         This multiplies elements by adding their indicies modulo 2^m-1
         a,b (Int) - Galois Field elements to be multiplied together to return another GF element
+
+        returns (Int) result
         """
         # get mutliplicative elemnts ie remove 0 from begining so 1 is alpha^0 at index 0
         units = self.elem_table[1:] 
@@ -114,6 +127,8 @@ class Galois_Field():
         """
         This divides elements by multiplying by inverses in the GF
         a,b (Int) - Galois Field elements to perform a / b
+
+        returns (Int) result
         """
 
         if a== 0 :

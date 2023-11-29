@@ -9,20 +9,19 @@ def gen_poly(GF, gen_degree):
     GF (Galois_Field) -  Galois Field we are working in
     gen_degree (Int) - degree of the generator polynomial ie n-k
     
-    result (Int[]) - list of generator polynomial with coefficnets as GF elements
+    result (Int[]) - list of generator polynomial with coefficients as GF elements
     """
     gen_roots = GF.elem_table[1:gen_degree+1]
 
     # g(x) = (x-alpa^0)(x-alpha^2)...(x-alpha^n-k-1)
     # ie g(x) = (x+alpa^0)(x+alpha^2)...(x+alpha^n-k-1) as addition is subtraction in GF
     # need to expand this but using the field multiplication
-
     # Take first root to get (x-alpha^0)
     result = [1, gen_roots.pop(0)]
 
     for r in gen_roots:
-        mult_by_root = [GF.mult(i, r) for i in result] # multiplies result what we had by root
-        result.append(0) # what we had multiplies eveything by x
+        mult_by_root = [GF.mult(i, r) for i in result] # multiplies result by root
+        result.append(0) # multiplies result by x
 
         # go through from low to highest degree and add mult-by root to result 
         for i in range(1,len(mult_by_root)+1):
@@ -37,9 +36,8 @@ def GF_horner(GF, x, poly):
 
     GF (Galois_Field) -  Galois Field we are working in
     x (Int) - Galois Field element we are evaluating at
-    poly (Int[]) - The pollynomial we are evaluating
+    poly (Int[]) - The polynomial we are evaluating
     """
-
     value = poly[0] # if degree 0 then this is the result
 
     for i in range(1, len(poly)):
@@ -83,11 +81,10 @@ def berlekamp_massey(GF, syndromes, added_bits):
     cx = [1,0] # correction polynomial - set to x
 
     while (K <= added_bits):
-        #  print(f"\nStatus: K:{K} L:{L} cx:{cx} vx:{vx}")
 
         e = syndromes[K-1]
         for i in range(1, L+1):
-            # note v(x) in literature indicies labelled 0 as lowest power element 
+            # note v(x) in literature indices labelled 0 as lowest power element 
             # hence the -i-1 on the vx as 'going backwards'
             e = GF.add(e, GF.mult(syndromes[K-1-i], vx[-i-1]))
 
@@ -99,18 +96,17 @@ def berlekamp_massey(GF, syndromes, added_bits):
 
             if ((2*L) < K):
                 L = K-L # limits L to number of syndromes we have
-                cx = [GF.div(i, e) for i in vx] # divide cx by e 
+                cx = [GF.div(i, e) for i in vx] # divide cx by error e
             vx = new_vx
 
         cx.append(0) # equivalent to mulitplying by x
         K += 1
     
-    # print(f"\nStep final : {K} {L} {cx} {vx}")
     return vx
 
 def error_mag_poly(GF, vx, sx, added_bits):
     """
-    This finds the error magnitude polynomial which is calcluated
+    This finds the error magnitude polynomial which is calculated
     by using the error locator polynomial and the syndrome polynomial
     This is often denoted as capital omega in literature
 
@@ -121,7 +117,7 @@ def error_mag_poly(GF, vx, sx, added_bits):
 
     qx (Int[]) - the error magnitude polynomial
     """
-    # calcualated via first multiplying syndrome polynomial and error locator
+    # calculated via first multiplying syndrome polynomial and error locator
     qx = mult_polys(GF, sx, vx)
 
     # then the error magnitude polynomial is this modulo x^2t
@@ -132,9 +128,9 @@ def error_mag_poly(GF, vx, sx, added_bits):
 
 def find_inv_roots(GF, vx):
     """
-    The inverse of the roots of the berlekamp massey error locator polynomial
+    The inverse of the roots of the Berlekamp Massey error locator polynomial
     provide the error locator numbers
-    This goes through and finds these inverses of the roots 
+    This goes through and finds these roots and their inverses
 
     GF (Galois_Field) -  Galois Field we are working in
     vx (Int[]) - the error locator polynomial
@@ -164,10 +160,12 @@ def forney_algorithm(GF, error_locations, vx, qx):
     error_locations (Int[]) - powers in codeword polynomial at which the errors are located
     vx (Int[]) - the error locator polynomial
     qx (Int[]) - the error magnitude polynomial
+
+    error_values (Int[]) - list of integer error values
     """
     error_values = []
 
-    # ecah error location is the power of alpha that is Xj in literarture
+    # each error location is the power of alpha that is Xj in literarture
     for l in error_locations:
         l_elem = GF.elem_table[l+1]
         l_inv = GF.inverse_table[l+1]
@@ -201,20 +199,19 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
     RS_k (Int) - RS original message length
     RS_m (Int) - Symbol length in bits 
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
-    verbose (Boolean) - if set to true then will print out intermediate results
+    verbose (Boolean) - if set to True then will print out intermediate results
     
-    tx (Int[]) - List of integers of tx message (for now might convert from binary later)
+    tx (Int[]) - List of integers of tx message 
     """
     verbose_string = "\n -- ENCODING -- \n"
 
     irpol = Binary_Polynomial(irreducible_p)
     GF = Galois_Field(RS_m, irpol)
     
-    # Creates generator polnomial
+    # Creates generator polynomial
     gx = gen_poly(GF, (RS_n - RS_k)) 
     verbose_string += (f"Generator polynomial {gx}\n")
 
-    # We have message 
     mx = tx.copy()
     mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
 
@@ -251,7 +248,7 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     syndromes = check_syndromes(GF, rx, (RS_n-RS_k))
     verb_string += (f"Syndromes are: {syndromes}\n")
 
-    # Calculate error-locator polynomial using berlekamp
+    # Calculate error-locator polynomial using Berlekamp
     vx = berlekamp_massey(GF, syndromes, (RS_n-RS_k))
     verb_string += (f"Error locator polynomial: {vx}\n")
 
@@ -267,12 +264,12 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
 
     errors = forney_algorithm(GF, error_locations, vx, qx)
     
-    # Now we correct the errors!!
-    # Just add (subtract) the errors from the recieved message
+    # Now we correct the errors!
+    # Just add (=subtract) the errors from the recieved message
     for i in range(len(error_locations)):
         place = error_locations[i]
         rx[-place-1] = GF.add(rx[-place-1], errors[i])
-    # rx is now the corrceted polynomial!
+    # rx is now the corrected polynomial!
 
     if verbose:
         print(verb_string)
@@ -285,6 +282,7 @@ def bin_to_int_list(bin_file, sym_bits):
     """
     This takes a file of a binary number, then splits that binary into 
     symbols defined by sym_bits and puts the integer value of these chunks into a list
+    This is used for demonstration purposes that the algorithm works for any binary data
 
     mes_str (String) - message string to convert
     sym_bits (Int) - size of symbol 
@@ -306,13 +304,15 @@ def bin_to_int_list(bin_file, sym_bits):
 
 def demo(verbose=True, rand=True):
     """
-    This is just to demonstrate using the functions with an example
+    This is to demonstrate using the functions with an example using 
+    the file "binary.txt"
 
     verbose (Boolean) - If true, gives extra details on inner computations 
     rand (Boolean) - If set to True randomises the errors, if False uses set errors 
     """
 
     print("\nREED SOLOMON DEMONSTRATION")
+    # Here we set our n,k and m parameters
     n = 15
     k = 11
     m = int(math.log(n+1,2))

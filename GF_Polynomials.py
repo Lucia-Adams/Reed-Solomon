@@ -14,6 +14,8 @@ def add_polys(GF, ax, bx):
     GF (Galois_Field) -  Galois Field we are working in
     ax (Int[]) - first polynomial
     bx (Int[]) - second polynomial
+
+    result (Int[]) - resultant polynomial
     """
     result = max([ax, bx], key=len)
 
@@ -30,6 +32,8 @@ def mult_polys(GF, ax, bx):
     GF (Galois_Field) -  Galois Field we are working in
     ax (Int[]) - first polynomial
     bx (Int[]) - second polynomial
+
+    prod (Int[]) - resultant product polynomial
     """
 
     len_ax = len(ax)
@@ -51,6 +55,8 @@ def poly_divide_r(GF, mx, gx):
     GF (Galois_Field) -  Galois Field we are working in
     mx (Int[]) - Polynomial to be divided
     gx (Int[]) - Polynomial to divide by
+
+    remainder (Int[]) - resultant remainder polynomial
     """
     remainder= mx
     gx_len = len(gx)
@@ -72,6 +78,8 @@ def remove_zeros(poly):
     """
     Take polynomial with leading 0 terms and removes so in simplist form
     poly (Int[]) - list of coefficients
+
+    poly (Int[]) - resultant polynomial
     """
     non_zero = 0
     for i in poly:
