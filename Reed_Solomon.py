@@ -215,7 +215,6 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
 
     mx = tx.copy()
     mx.extend([0 for i in range(RS_n - RS_k)]) # this multiplies mx by x^(n-k)
-
     # Remainder of mx.x^(n-k) / gx and of degree (n-k)
     rx = poly_divide_r(GF, mx, gx)
     verbose_string +=(f"Remainder of mx.x^(n-k) / gx is {rx}\n")
@@ -333,22 +332,22 @@ def demo(verbose=True, rand=True):
     rx = encode(n, k , m , '10011', message, verbose)
     print(f"The encoded message to send is: {rx}\n")
 
-    print("-- TRANSMISSION -- \n")
-    # Here we are simulating errors in transmission
-    if rand:
-        print("(Randomising errors)")
-        max_errors = (n-k) // 2
-        for i in range(max_errors):
-            error_place = random.randint(1, n-1)
-            error = random.randint(1, n)
-            rx[error_place] = error    
-    else:
-        rx[5] = 11
-        rx[12] = 1
+    # print("-- TRANSMISSION -- \n")
+    # # Here we are simulating errors in transmission
+    # if rand:
+    #     print("(Randomising errors)")
+    #     max_errors = (n-k) // 2
+    #     for i in range(max_errors):
+    #         error_place = random.randint(1, n-1)
+    #         error = random.randint(1, n)
+    #         rx[error_place] = error    
+    # else:
+    #     rx[5] = 11
+    #     rx[12] = 1
 
-    print(f"In 'transmission' this changes to : {rx}")
-    corrected = decode(n, k , m , '10011', rx, verbose)
-    print(f"\nThis is then corrected back to : {corrected}\n")
+    # print(f"In 'transmission' this changes to : {rx}")
+    # corrected = decode(n, k , m , '10011', rx, verbose)
+    # print(f"\nThis is then corrected back to : {corrected}\n")
 
 
 if __name__ == "__main__":
