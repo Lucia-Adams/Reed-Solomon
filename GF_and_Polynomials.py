@@ -136,7 +136,7 @@ class Galois_Field():
 
     def add(self, a ,b):
         """
-        Addition and subtarction and XOR are equivalent in the Galois Field 
+        Addition and subtraction and XOR are equivalent in the Galois Field 
         a,b (Int) - Galois Field elements to add
 
         returns (Int) result
