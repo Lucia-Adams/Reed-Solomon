@@ -197,11 +197,12 @@ def encode(RS_n, RS_k , RS_m, irreducible_p, tx, verbose):
 
     RS_n (Int) - RS codeword length
     RS_k (Int) - RS original message length
-    RS_m (Int) - Symbol length in bits 
+    RS_m (Int) - symbol bit size
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field
+    tx (Int[]) - List of GF integers of message to encode
     verbose (Boolean) - if set to True then will print out intermediate results
     
-    tx (Int[]) - List of integers of tx message 
+    tx (Int[]) - List of GF integers of tx message 
     """
     verbose_string = "\n -- ENCODING -- \n"
 
@@ -235,7 +236,7 @@ def decode(RS_n, RS_k , RS_m, irreducible_p, rx, verbose):
     RS_k (Int) - RS original message length
     RS_m (Int) - Symbol length in bits 
     irreducible_p (Str) - Chosen irreducible polynomial for the Galois Field  
-    rx (Int[]) - List of integers of rx message (for now might convert from binary later)
+    rx (Int[]) - List of integers of rx message
     verbose (Boolean) - if set to true then will print out intermediate results
 
     corrected (Int[]) - returns the original message with any errors corrected

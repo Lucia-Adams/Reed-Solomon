@@ -93,17 +93,7 @@ class Galois_Field():
             inverse_table.append(units[inverse_index])
         
         return inverse_table
-    
-    def add(self, a ,b):
-        """
-        Addition and subtarction and XOR are equivalent in the Galois Field 
-        a,b (Int) - Galois Field elements to add
-
-        returns (Int) result
-        """
-        return a^b
-
-    
+   
     def mult(self, a,b):
         """
         This multiplies elements by adding their indicies modulo 2^m-1
@@ -143,3 +133,12 @@ class Galois_Field():
         b_inverse = self.inverse_table[b_index+1] 
 
         return self.mult(a, b_inverse)
+
+    def add(self, a ,b):
+        """
+        Addition and subtarction and XOR are equivalent in the Galois Field 
+        a,b (Int) - Galois Field elements to add
+
+        returns (Int) result
+        """
+        return a^b
