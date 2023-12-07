@@ -81,6 +81,7 @@ def berlekamp_massey(GF, syndromes, added_bits):
     cx = [1,0] # correction polynomial - set to x
 
     while (K <= added_bits):
+        # print(f"K:{K}  L:{L}  vx:{vx}  cx:{cx}") <- for demonstration
 
         e = syndromes[K-1]
         for i in range(1, L+1):
@@ -101,6 +102,7 @@ def berlekamp_massey(GF, syndromes, added_bits):
 
         cx.append(0) # equivalent to mulitplying by x
         K += 1
+    # print(f"K:{K}  L:{L}  vx:{vx}  cx:{cx}")
     
     return vx
 
@@ -332,22 +334,22 @@ def demo(verbose=True, rand=True):
     rx = encode(n, k , m , '10011', message, verbose)
     print(f"The encoded message to send is: {rx}\n")
 
-    # print("-- TRANSMISSION -- \n")
-    # # Here we are simulating errors in transmission
-    # if rand:
-    #     print("(Randomising errors)")
-    #     max_errors = (n-k) // 2
-    #     for i in range(max_errors):
-    #         error_place = random.randint(1, n-1)
-    #         error = random.randint(1, n)
-    #         rx[error_place] = error    
-    # else:
-    #     rx[5] = 11
-    #     rx[12] = 1
+    print("-- TRANSMISSION -- \n")
+    # Here we are simulating errors in transmission
+    if rand:
+        print("(Randomising errors)")
+        max_errors = (n-k) // 2
+        for i in range(max_errors):
+            error_place = random.randint(1, n-1)
+            error = random.randint(1, n)
+            rx[error_place] = error    
+    else:
+        rx[5] = 11
+        rx[12] = 1
 
-    # print(f"In 'transmission' this changes to : {rx}")
-    # corrected = decode(n, k , m , '10011', rx, verbose)
-    # print(f"\nThis is then corrected back to : {corrected}\n")
+    print(f"In 'transmission' this changes to : {rx}")
+    corrected = decode(n, k , m , '10011', rx, verbose)
+    print(f"\nThis is then corrected back to : {corrected}\n")
 
 
 if __name__ == "__main__":
