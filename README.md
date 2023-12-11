@@ -1,13 +1,13 @@
 # Reed-Solomon
 This is an implementation of the Reed Solomon algorithm in Python.
 
-I have an accompanying video to explain the algorithm here: https://youtu.be/UkDAMomEvxY
+I have made an accompanying video to explain the algorithm here: https://youtu.be/UkDAMomEvxY
 
 ## Reed_Solomon.py
 This is where the encoding and decoding functions are, as well as the sub-algorithms such as the
 Berlekamp-Massey Algorithm, Forney algorithm etc.
 
-> I have also included a demo function for RS(15,11). This reads in the file `binary.txt` which contains one codewords worth of binary data to exibit the function working. You can set this to be verbose which will show you the substeps. It also allows you to choose whether the errors are random or not. The non-random errors follow the main example given within the guide by C.K.P Clarke*, should you want to compare my implementation with their explanations.
+> I have also included a demo function for RS(15,11). This reads in the file `binary.txt` which contains one codewords worth of binary data to exhibit the function working. You can set this to be verbose which will show you the substeps. It also allows you to choose whether the errors are random or not. The non-random errors follow the main example given within the guide by C.K.P Clarke*, should you want to compare my implementation with their explanations.
 
 ## GF_and_Polynomials.py
 In this file I have implemented two classes
