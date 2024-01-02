@@ -1,7 +1,7 @@
 # Reed-Solomon
 This is an implementation of the Reed Solomon algorithm in Python.
 
-I have made an accompanying video to explain the algorithm here: https://youtu.be/UkDAMomEvxY
+I have made an accompanying video to explain the algorithm here: https://www.youtube.com/watch?v=RmxH81Mc860
 
 ## Reed_Solomon.py
 This is where the encoding and decoding functions are, as well as the sub-algorithms such as the
